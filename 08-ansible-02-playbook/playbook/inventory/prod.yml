@@ -2,4 +2,27 @@
 clickhouse:
   hosts:
     clickhouse-01:
-      ansible_host: <IP_here>
+      ansible_host: localhost
+      ansible_port: 2223
+      ansible_connection: ssh
+      ansible_user: root
+      ansible_password: ubuntu123 
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+vector:
+  hosts:
+    vector-01:
+      ansible_host: localhost
+      ansible_port: 2225
+      ansible_connection: ssh
+      ansible_user: root
+      ansible_password: ubuntu123 
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+lighthouse:
+  hosts:
+    lighthouse-01:
+      ansible_host: localhost
+      ansible_port: 2228
+      ansible_connection: ssh
+      ansible_user: root
+      ansible_password: ubuntu123 
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no'

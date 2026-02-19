@@ -1,36 +1,239 @@
 ---
-- name: Install Clickhouse
-  hosts: clickhouse
-  handlers:
-    - name: Start clickhouse service
-      become: true
-      ansible.builtin.service:
-        name: clickhouse-server
-        state: restarted
+- name: Deploy LightHouse static site with Nginx
+  hosts: lighthouse
+  become: yes
   tasks:
-    - block:
-        - name: Get clickhouse distrib
-          ansible.builtin.get_url:
-            url: "https://packages.clickhouse.com/rpm/stable/{{ item }}-{{ clickhouse_version }}.noarch.rpm"
-            dest: "./{{ item }}-{{ clickhouse_version }}.rpm"
-          with_items: "{{ clickhouse_packages }}"
-      rescue:
-        - name: Get clickhouse distrib
-          ansible.builtin.get_url:
-            url: "https://packages.clickhouse.com/rpm/stable/clickhouse-common-static-{{ clickhouse_version }}.x86_64.rpm"
-            dest: "./clickhouse-common-static-{{ clickhouse_version }}.rpm"
-    - name: Install clickhouse packages
-      become: true
-      ansible.builtin.yum:
+    - name: Install required packages (git, nginx)
+      apt:
         name:
-          - clickhouse-common-static-{{ clickhouse_version }}.rpm
-          - clickhouse-client-{{ clickhouse_version }}.rpm
-          - clickhouse-server-{{ clickhouse_version }}.rpm
-      notify: Start clickhouse service
-    - name: Flush handlers
-      meta: flush_handlers
-    - name: Create database
-      ansible.builtin.command: "clickhouse-client -q 'create database logs;'"
-      register: create_db
-      failed_when: create_db.rc != 0 and create_db.rc !=82
-      changed_when: create_db.rc == 0
+          - git
+          - nginx
+        state: present
+        update_cache: yes
+
+    - name: Clone LightHouse repository
+      git:
+        repo: 'https://github.com/VKCOM/lighthouse'
+        dest: /opt/lighthouse
+        version: main
+        force: yes
+      notify: restart nginx
+
+    - name: Create nginx config for LightHouse
+      template:
+        src: |
+          server {
+              listen 80;
+              server_name _;
+
+              root /opt/lighthouse;
+              index index.html;
+
+              location / {
+                  try_files $uri $uri/ =404;
+              }
+
+              # Disable access logs for static files
+              location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+                  expires 1y;
+                  add_header Cache-Control "public, immutable";
+                  access_log off;
+              }
+          }
+        dest: /etc/nginx/sites-available/lighthouse.conf
+      notify: reload nginx
+
+    - name: Enable LightHouse site
+      file:
+        src: /etc/nginx/sites-available/lighthouse.conf
+        dest: /etc/nginx/sites-enabled/lighthouse.conf
+        state: link
+      notify: reload nginx
+
+    - name: Remove default nginx site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: reload nginx
+
+    - name: Ensure nginx is running and enabled
+      systemd:
+        name: nginx
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: reload nginx
+      systemd:
+        name: nginx
+        state: reloaded
+
+    - name: restart nginx
+      systemd:
+        name: nginx
+        state: restarted
+
+# - name: Install ClickHouse on Ubuntu/Debian
+#   hosts: clickhouse
+#   become: yes
+#   vars:
+#     clickhouse_release_type: "stable"  # можно заменить на "lts"
+#     clickhouse_packages:
+#       - clickhouse-server
+#       - clickhouse-client
+
+#   tasks:
+#     - name: Install prerequisite packages
+#       apt:
+#         name:
+#           - apt-transport-https
+#           - ca-certificates
+#           - curl
+#           - gnupg
+#         state: present
+#         update_cache: yes
+
+#     - name: Download ClickHouse GPG key
+#       shell: |
+#         curl -fsSL 'https://packages.clickhouse.com/rpm/lts/repodata/repomd.xml.key' | sudo gpg --dearmor -o /usr/share/keyrings/clickhouse-keyring.gpg
+#       args:
+#         creates: /usr/share/keyrings/clickhouse-keyring.gpg
+
+#     - name: Get system architecture
+#       command: dpkg --print-architecture
+#       register: arch_result
+#       changed_when: false
+
+#     - name: Add ClickHouse repository
+#       apt_repository:
+#         repo: "deb [signed-by=/usr/share/keyrings/clickhouse-keyring.gpg arch={{ arch_result.stdout }}] https://packages.clickhouse.com/deb {{ clickhouse_release_type }} main"
+#         state: present
+
+#     - name: Update apt cache
+#       apt:
+#         update_cache: yes
+#         cache_valid_time: 3600
+
+#     - name: Install ClickHouse packages
+#       apt:
+#         name: "{{ clickhouse_packages }}"
+#         state: present
+    
+#     - name: Start ClickHouse server via service
+#       command: service clickhouse-server start
+#       register: service_start
+#       retries: 3
+#       delay: 5
+#       until: service_start.rc == 0
+#       ignore_errors: yes
+
+#     - name: Wait for ClickHouse to start (port 8123)
+#       wait_for:
+#         port: 8123
+#         delay: 10
+#         timeout: 120
+#       when: service_start is success
+
+#     - name: Verify ClickHouse is responding via HTTP
+#       uri:
+#         url: http://localhost:8123/
+#         method: GET
+#         status_code: 200
+#       register: http_check
+#       retries: 10
+#       delay: 5
+#       until: http_check.status == 200
+#       when: service_start is success
+
+#     - name: Final success message
+#       debug:
+#         msg: "ClickHouse installed and running successfully!"
+#       when: http_check is succeeded
+
+
+# - name: Install Vector
+#   hosts: vector
+#   become: yes
+#   vars:
+#     vector_version: "0.30.0"
+#     vector_install_dir: "/opt/vector"
+#     vector_config_path: "/etc/vector/vector.toml"
+#     vector_binary_path: "{{ vector_install_dir }}/vector-x86_64-unknown-linux-musl/bin/vector"
+#     vector_data_dir: "/var/lib/vector"  # новая переменная для директории данных
+
+#   tasks:
+#     - name: Create data directory for Vector
+#       file:
+#         path: "{{ vector_data_dir }}"
+#         state: directory
+#         mode: '0755'
+#         owner: root
+#         group: root
+
+#     - name: Create installation directory
+#       file:
+#         path: "{{ vector_install_dir }}"
+#         state: directory
+#         mode: '0755'
+
+#     - name: Download Vector to remote host
+#       get_url:
+#         url: "https://packages.timber.io/vector/{{ vector_version }}/vector-{{ vector_version }}-x86_64-unknown-linux-musl.tar.gz"
+#         dest: "/tmp/vector.tar.gz"
+
+#     - name: Extract Vector archive on remote host
+#       unarchive:
+#         src: "/tmp/vector.tar.gz"
+#         dest: "{{ vector_install_dir }}"
+#         remote_src: yes
+
+#     - name: Make binary executable
+#       file:
+#         path: "{{ vector_binary_path }}"
+#         mode: '0755'
+
+#     - name: Create config directory
+#       file:
+#         path: "/etc/vector"
+#         state: directory
+
+#     - name: Deploy corrected config with existing data_dir
+#       copy:
+#         content: |
+#           data_dir = "{{ vector_data_dir }}"  # используем переменную
+
+#           [sources.in]
+#           type = "demo_logs"
+#           format = "json"
+
+#           [sinks.out]
+#           type = "console"
+#           inputs = ["in"]
+#           encoding.codec = "json"
+#         dest: "{{ vector_config_path }}"
+
+#     - name: Start Vector
+#       shell: |
+#         nohup {{ vector_binary_path }} --config-toml {{ vector_config_path }} > /var/log/vector.log 2>&1 &
+#       args:
+#         creates: /var/run/vector.pid
+
+#     - name: Wait for Vector to start
+#       pause:
+#         seconds: 5
+
+#     - name: Verify installation
+#       command: "{{ vector_binary_path }} validate {{ vector_config_path }}"
+#       register: validation
+#       ignore_errors: yes
+
+#     - name: Show validation result
+#       debug:
+#         msg: |
+#           Validation result:
+#           - Success: {{ validation is success }}
+#           - Output: {{ validation.stdout | default('No output') }}
+#           - Errors: {{ validation.stderr | default('None') }}
+
+
+

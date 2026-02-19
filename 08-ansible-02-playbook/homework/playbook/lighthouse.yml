@@ -1,0 +1,5 @@
+- name: Deploy lighthouse static site
+  hosts: lighthouse
+  become: yes
+  roles:
+    - lighthouse

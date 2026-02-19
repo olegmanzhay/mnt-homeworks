@@ -1,0 +1,6 @@
+- name: Deploy clickhouse static site
+  force_handlers: yes
+  hosts: clickhouse
+  become: yes
+  roles:
+    - clickhouse

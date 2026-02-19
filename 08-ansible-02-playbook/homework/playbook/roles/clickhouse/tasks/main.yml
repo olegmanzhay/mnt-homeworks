@@ -1,0 +1,47 @@
+- name: Download and install ClickHouse GPG key
+  become: true
+  ansible.builtin.shell: |
+    curl -fsSL 'https://packages.clickhouse.com/rpm/lts/repodata/repomd.xml.key' | gpg --dearmor -o /usr/share/keyrings/clickhouse-keyring.gpg
+  args:
+    creates: /usr/share/keyrings/clickhouse-keyring.gpg
+  register: key_import_result
+  failed_when: key_import_result.rc != 0
+
+- name: Add ClickHouse repository
+  become: true
+  ansible.builtin.apt_repository:
+    repo: 'deb [signed-by=/usr/share/keyrings/clickhouse-keyring.gpg] https://packages.clickhouse.com/deb stable main'
+    state: present
+    filename: clickhouse
+
+- name: Update APT cache
+  become: true
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Install ClickHouse packages
+  become: true
+  ansible.builtin.apt:
+    name:
+      - clickhouse-common-static
+      - clickhouse-client
+      - clickhouse-server
+    state: present
+
+- name: Ensure ClickHouse service is started and enabled
+  become: true
+  ansible.builtin.systemd:
+    name: clickhouse-server
+    state: started
+    enabled: yes
+  register: clickhouse_service
+
+- name: Wait for ClickHouse server to start
+  become: false
+  ansible.builtin.command: clickhouse-client --query "SELECT 1"
+  register: clickhouse_status
+  retries: 10
+  delay: 5
+  until: clickhouse_status.rc == 0
+  ignore_errors: true
+
