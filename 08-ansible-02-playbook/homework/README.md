@@ -1,8 +1,9 @@
-Задание
+Задание 3
 --------------------------
+https://github.com/olegmanzhay/mnt-homeworks/tree/MNT-video/08-ansible-02-playbook/homework
 
-После разворачивания нужно сделать следующеe:
-- добавить прослушку 0.0.0.0 - чтобы clickhouse принимал все запросы 
+После разворачивания  клик нужно сделать следующеe:
+- добавить прослушку 0.0.0.0 - чтобы clickhouse принимал все запросы (в том числе от lighthouse)
 
 
 Установка Vector на тачку clickhouse и сбор Error.log clickhouse
