@@ -1,12 +1,37 @@
 Задание 3
 --------------------------
-https://github.com/olegmanzhay/mnt-homeworks/tree/MNT-video/08-ansible-02-playbook/homework
+Дирректория с проктом: https://github.com/olegmanzhay/mnt-homeworks/tree/MNT-video/08-ansible-02-playbook/homework
+
+Алгоритм работы:
+- Поднять ВМ
+- Развернуть на ВМ Clickhouse, lighthouse, vector
+
 
 После разворачивания  клик нужно сделать следующеe:
-- добавить прослушку 0.0.0.0 - чтобы clickhouse принимал все запросы (в том числе от lighthouse)
+```
+sudo nano /etc/clickhouse-server/config.d/listen-host.xml
+
+<yandex>
+    <listen_host>0.0.0.0</listen_host>
+</yandex>
+```
+
+![alt text](images/clickhouse.png)
+
+
+Проверка доступа от Lighthouse до Clickhouse 
+```
+curl "http://158.160.224.147:8123/" -d "SHOW Databases"
+INFORMATION_SCHEMA
+default
+information_schema
+system
+```
 
 
 Установка Vector на тачку clickhouse и сбор Error.log clickhouse
+
+```
 ubuntu@vector:/opt/vector/vector-x86_64-unknown-linux-musl/bin$ ./vector --config-toml /etc/vector/vector.toml
 2026-02-19T11:52:43.869332Z  INFO vector::app: Log level is enabled. level="vector=info,codec=info,vrl=info,file_source=info,tower_limit=trace,rdkafka=info,buffers=info,lapin=info,kube=info"
 2026-02-19T11:52:43.869863Z  INFO vector::app: Loading configs. paths=["/etc/vector/vector.toml"]
@@ -17,4 +42,5 @@ ubuntu@vector:/opt/vector/vector-x86_64-unknown-linux-musl/bin$ ./vector --confi
 2026-02-19T11:52:43.871852Z  INFO source{component_kind="source" component_id=clickhouse_logs component_type=file component_name=clickhouse_logs}: vector::sources::file: Starting file server. include=["/var/log/clickhouse-server/clickhouse-server.err.log"] exclude=[]
 2026-02-19T11:52:43.872225Z  INFO source{component_kind="source" component_id=clickhouse_logs component_type=file component_name=clickhouse_logs}:file_server: file_source::checkpointer: Loaded checkpoint data.
 2026-02-19T11:52:43.872494Z  INFO source{component_kind="source" component_id=clickhouse_logs component_type=file component_name=clickhouse_logs}:file_server: vector::internal_events::file::source: Found new file to watch. file=/var/log/clickhouse-server/clickhouse-server.err.log
-{"filename":"/var/log/clickhouse-server/clickhouse-server.err.log","host":"vector","message":"123123123","source_type":"file","timestamp":"2026-02-19T11:54:36.586983927Z"}
+{"filename":"/var/log/clickhouse-server/clickhouse-server.err.logls ","host":"vector","message":"123123123","source_type":"file","timestamp":"2026-02-19T11:54:36.586983927Z"}
+```
