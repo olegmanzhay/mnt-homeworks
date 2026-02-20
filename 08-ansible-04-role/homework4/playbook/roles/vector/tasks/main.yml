@@ -1,0 +1,117 @@
+---
+- name: Download Vector to remote host
+  get_url:
+    url: "https://packages.timber.io/vector/{{ vector_version }}/vector-{{ vector_version }}-x86_64-unknown-linux-musl.tar.gz"
+    dest: "/tmp/vector.tar.gz"
+  register: vector_download
+
+- name: Create destination directory for Vector
+  file:
+    path: "/opt/vector"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: vector_download is success
+
+- name: Extract Vector archive
+  unarchive:
+    src: "/tmp/vector.tar.gz"
+    dest: "/opt/vector"
+    remote_src: yes
+    extra_opts: [--strip-components=1]
+  when: vector_download is success
+
+- name: Create vector group
+  group:
+    name: "{{ vector_group }}"
+    system: yes
+  when: vector_download is success
+
+- name: Create vector user
+  user:
+    name: "{{ vector_user }}"
+    group: "{{ vector_group }}"
+    system: yes
+    shell: /bin/false
+    create_home: no
+  when: vector_download is success
+
+- name: Ensure Vector config directory exists
+  file:
+    path: "/etc/vector"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Ensure Vector data directory exists
+  file:
+    path: "/var/lib/vector"
+    state: directory
+    owner: "{{ vector_user | default('vector') }}"
+    group: "{{ vector_group | default('vector') }}"
+    mode: '0755'
+  when: vector_download is success
+
+- name: Deploy Vector configuration
+  template:
+    src: vector.toml.j2
+    dest: "{{ vector_config_path }}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart vector
+
+- name: Validate Vector configuration
+  command: /opt/vector/vector-x86_64-unknown-linux-musl/bin/vector validate --config-toml {{ vector_config_path }}
+  register: config_validation
+  changed_when: false
+  failed_when: config_validation.rc != 0
+
+- name: Create systemd service file for Vector
+  copy:
+    content: |
+      [Unit]
+      Description=Vector
+      After=network.target
+
+      [Service]
+      Type=simple
+      User={{ vector_user }}
+      Group={{ vector_group }}
+      ExecStart=/opt/vector/vector-x86_64-unknown-linux-musl/bin/vector --config {{ vector_config_path }}
+      WorkingDirectory=/opt/vector/vector-x86_64-unknown-linux-musl
+      Restart=always
+      RestartSec=5
+      NoNewPrivileges=yes
+      PrivateTmp=yes
+
+      [Install]
+      WantedBy=multi-user.target
+    dest: "/etc/systemd/system/vector.service"
+    mode: '0644'
+  notify: reload systemd
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
+  when: reload_systemd is defined and reload_systemd.changed
+
+- name: Enable and start Vector service
+  systemd:
+    name: vector
+    enabled: yes
+    state: started
+  register: vector_service
+
+- name: Wait for Vector API to be available
+  uri:
+    url: "http://127.0.0.1:{{ vector_api_port }}/health"
+    status_code: 200
+    timeout: 10
+  retries: 5
+  delay: 2
+  register: api_check
+  until: api_check.status == 200
+  when: vector_service is changed

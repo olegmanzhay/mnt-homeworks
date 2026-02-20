@@ -1,0 +1,46 @@
+---
+- name: Install Nginx
+  become: true
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: yes
+
+- name: Clone LightHouse repository
+  ansible.builtin.git:
+    repo: 'https://github.com/VKCOM/lighthouse'
+    dest: /var/www/lighthouse
+    version: master
+    force: yes
+  notify: Restart Nginx
+
+- name: Configure Nginx for LightHouse
+  become: true
+  ansible.builtin.template:
+    src: lighthouse.conf.j2
+    dest: /etc/nginx/sites-available/lighthouse.conf
+  notify: Reload Nginx
+
+- name: Enable LightHouse site
+  become: true
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/lighthouse.conf
+    dest: /etc/nginx/sites-enabled/lighthouse.conf
+    state: link
+  notify: Reload Nginx
+
+- name: Start and enable Nginx
+  become: true
+  ansible.builtin.systemd:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Verify LightHouse is accessible
+  ansible.builtin.uri:
+    url: http://localhost
+    status_code: 200
+  register: lighthouse_check
+  retries: 5
+  delay: 2
+  until: lighthouse_check.status == 200

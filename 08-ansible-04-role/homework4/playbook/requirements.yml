@@ -1,0 +1,14 @@
+---
+- name: lighthouse
+  src: https://github.com/olegmanzhay/lighthouse-role.git
+  scm: git
+
+- name: clickhouse
+  src: https://github.com/olegmanzhay/clickhouse-role.git
+  scm: git
+
+- name: vector
+  src: https://github.com/olegmanzhay/vector-role-1.git
+  scm: git
+  
+  

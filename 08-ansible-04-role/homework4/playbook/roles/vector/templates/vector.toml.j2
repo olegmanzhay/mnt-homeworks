@@ -1,0 +1,20 @@
+data_dir = "/var/lib/vector"
+
+[api]
+enabled = true
+address = "127.0.0.1:8686"
+
+[sources.system_logs]
+type = "file"
+include = [
+  "/var/log/syslog",
+  "/var/log/auth.log"
+]
+read_from = "end"
+# batch_size удалён — больше не нужен
+
+[sinks.console_output]
+type = "console"
+inputs = ["system_logs"]
+encoding.codec = "json"
+target = "stdout"

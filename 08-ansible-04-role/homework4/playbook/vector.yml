@@ -1,0 +1,6 @@
+- name: Deploy vector static site
+  force_handlers: yes
+  hosts: vector
+  become: yes
+  roles:
+    - vector

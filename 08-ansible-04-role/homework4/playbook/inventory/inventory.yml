@@ -1,0 +1,19 @@
+---
+clickhouse:
+  hosts:
+    clickhouse-01:
+      ansible_host: 158.160.220.45
+      ansible_user: ubuntu
+      ansible_ssh_private_key_file: ~/.ssh/ssh-key-15-12-25
+lighthouse:
+  hosts:
+    lighthouse-01:
+      ansible_host:  158.160.179.184
+      ansible_user: ubuntu
+      ansible_ssh_private_key_file: ~/.ssh/ssh-key-15-12-25
+vector:
+  hosts:
+    vector-01:
+      ansible_host:  158.160.220.45
+      ansible_user: ubuntu
+      ansible_ssh_private_key_file: ~/.ssh/ssh-key-15-12-25
