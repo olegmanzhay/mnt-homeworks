@@ -31,7 +31,7 @@ system
 ```
 
 
-Установка Vector на тачку clickhouse и сбор Error.log clickhouse
+Установка Vector на тачку clickhouse и сбор Error.log clickhouse c выводом в console
 ------------------------------------------------------------------
 
 ```
