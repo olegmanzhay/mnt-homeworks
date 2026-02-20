@@ -7,7 +7,8 @@
 - Развернуть на ВМ Clickhouse, lighthouse, vector
 
 
-После разворачивания  клик нужно сделать следующеe:
+После разворачивания Clickhouse нужно сделать следующеe для долступа к Clickhouse из интернета:
+----------------------------------------------------------------------------------------------
 ```
 sudo nano /etc/clickhouse-server/config.d/listen-host.xml
 
@@ -20,6 +21,7 @@ sudo nano /etc/clickhouse-server/config.d/listen-host.xml
 
 
 Проверка доступа от Lighthouse до Clickhouse 
+----------------------------------------------
 ```
 curl "http://158.160.224.147:8123/" -d "SHOW Databases"
 INFORMATION_SCHEMA
@@ -30,6 +32,7 @@ system
 
 
 Установка Vector на тачку clickhouse и сбор Error.log clickhouse
+------------------------------------------------------------------
 
 ```
 ubuntu@vector:/opt/vector/vector-x86_64-unknown-linux-musl/bin$ ./vector --config-toml /etc/vector/vector.toml
