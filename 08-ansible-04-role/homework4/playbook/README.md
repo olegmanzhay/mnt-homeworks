@@ -1,7 +1,8 @@
 ## Molecule
 
 Проработал запуск тестов на ubuntu:22.04 и debian:11  
-Ссылка на сценарий: https://github.com/olegmanzhay/mnt-homeworks/tree/MNT-video/08-ansible-04-role/homework4/playbook/roles/vector/molecule/default  
+Ссылка на коммит: https://github.com/olegmanzhay/mnt-homeworks/commit/249c2727caf3960fbb1f6f7af8fb7e3dbbd45034
+
 
 
 ```
