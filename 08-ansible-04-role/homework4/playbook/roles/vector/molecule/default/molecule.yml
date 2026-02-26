@@ -1,0 +1,20 @@
+dependency:
+  name: galaxy
+  options:
+    requirements-file: requirements.yml
+platforms:
+  - name: molecule-ubuntu
+    image: ubuntu-ssh:latest
+    pre_build_image: true
+  - name: oraclelinux
+    image: oraclelinux:8
+    pre_build_image: true
+provisioner:
+  name: ansible
+  playbooks:
+    prepare: prepare.yml
+    converge: converge.yml
+  env:
+    ANSIBLE_ROLES_PATH: /home/admin-oleg/Desktop/Netology/mnt-homeworks/08-ansible-04-role/homework4/playbook/roles
+verifier:
+  name: ansible

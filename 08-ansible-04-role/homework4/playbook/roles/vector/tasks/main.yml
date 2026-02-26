@@ -61,7 +61,7 @@
     owner: root
     group: root
     mode: '0644'
-  notify: restart vector
+  # notify: restart vector
 
 - name: Validate Vector configuration
   command: /opt/vector/vector-x86_64-unknown-linux-musl/bin/vector validate --config-toml {{ vector_config_path }}
@@ -69,49 +69,59 @@
   changed_when: false
   failed_when: config_validation.rc != 0
 
-- name: Create systemd service file for Vector
-  copy:
-    content: |
-      [Unit]
-      Description=Vector
-      After=network.target
-
-      [Service]
-      Type=simple
-      User={{ vector_user }}
-      Group={{ vector_group }}
-      ExecStart=/opt/vector/vector-x86_64-unknown-linux-musl/bin/vector --config {{ vector_config_path }}
-      WorkingDirectory=/opt/vector/vector-x86_64-unknown-linux-musl
-      Restart=always
-      RestartSec=5
-      NoNewPrivileges=yes
-      PrivateTmp=yes
-
-      [Install]
-      WantedBy=multi-user.target
-    dest: "/etc/systemd/system/vector.service"
-    mode: '0644'
-  notify: reload systemd
-
-- name: Reload systemd daemon
-  systemd:
-    daemon_reload: yes
-  when: reload_systemd is defined and reload_systemd.changed
-
-- name: Enable and start Vector service
-  systemd:
-    name: vector
-    enabled: yes
-    state: started
+- name: Start Vector in background with shell (logs to /tmp/logs_vector.txt)
+  shell: |
+    nohup /opt/vector/vector-x86_64-unknown-linux-musl/bin/vector --config-toml /etc/vector/vector.toml > /tmp/logs_vector.txt 2>&1 &
+  args:
+    chdir: /
+  changed_when: false
   register: vector_service
+  failed_when: vector_service.rc != 0 and vector_service.rc is defined
 
-- name: Wait for Vector API to be available
-  uri:
-    url: "http://127.0.0.1:{{ vector_api_port }}/health"
-    status_code: 200
-    timeout: 10
-  retries: 5
-  delay: 2
-  register: api_check
-  until: api_check.status == 200
-  when: vector_service is changed
+
+# - name: Create systemd service file for Vector
+#   copy:
+#     content: |
+#       [Unit]
+#       Description=Vector
+#       After=network.target
+
+#       [Service]
+#       Type=simple
+#       User={{ vector_user }}
+#       Group={{ vector_group }}
+#       ExecStart=/opt/vector/vector-x86_64-unknown-linux-musl/bin/vector --config {{ vector_config_path }}
+#       WorkingDirectory=/opt/vector/vector-x86_64-unknown-linux-musl
+#       Restart=always
+#       RestartSec=5
+#       NoNewPrivileges=yes
+#       PrivateTmp=yes
+
+#       [Install]
+#       WantedBy=multi-user.target
+#     dest: "/etc/systemd/system/vector.service"
+#     mode: '0644'
+#   notify: reload systemd
+
+# - name: Reload systemd daemon
+#   systemd:
+#     daemon_reload: yes
+#   when: reload_systemd is defined and reload_systemd.changed
+
+# - name: Enable and start Vector service
+  # systemd:
+  #   name: vector
+  #   enabled: yes
+  #   state: started
+  # register: vector_service
+
+# - name: Wait for Vector API to be available
+#   uri:
+#     url: "http://127.0.0.1:{{ vector_api_port }}/health"
+#     status_code: 200
+#     timeout: 10
+#   retries: 5
+#   delay: 2
+#   register: api_check
+#   until: api_check.status == 200
+#   when: vector_service is changed

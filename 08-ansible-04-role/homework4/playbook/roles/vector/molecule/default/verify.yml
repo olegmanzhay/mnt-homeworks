@@ -1,0 +1,55 @@
+---
+- name: Verify Vector role functionality
+  hosts: all
+  gather_facts: true
+
+  tasks:
+    - name: Check Vector configuration validity
+      command: /opt/vector/vector-x86_64-unknown-linux-musl/bin/vector validate --config-toml /etc/vector/vector.toml
+      register: config_validation
+      changed_when: false
+
+    - name: Assert Vector configuration is valid
+      assert:
+        that:
+          - config_validation.rc == 0
+        fail_msg: "Vector configuration is invalid."
+        success_msg: "Vector configuration is valid"
+
+    - name: Check if Vector process is running (via pidof)
+      command: pidof vector
+      register: vector_pid
+      ignore_errors: true
+      changed_when: false
+
+    - name: Assert Vector process is running
+      assert:
+        that:
+          - vector_pid.stdout | length > 0
+        fail_msg: |
+          Vector process not found.
+          Possible causes:
+          - Vector failed to start
+          - Process terminated unexpectedly
+          - Binary not found at expected location
+        success_msg: "Vector process is running with PID {{ vector_pid.stdout }}"
+
+    - name: Check log file existence
+      stat:
+        path: /tmp/logs_vector.txt
+      register: log_file_stat
+
+    - name: Assert log file exists and is not empty
+      assert:
+        that:
+          - log_file_stat.stat.exists
+          - log_file_stat.stat.size > 0
+        fail_msg: |
+          Log file /tmp/logs_vector.txt does not exist or is empty.
+          Possible causes:
+          - Vector failed to start
+          - Log redirection is not working
+          - File permissions issue
+        success_msg: "Log file /tmp/logs_vector.txt exists and contains data"
+
+
