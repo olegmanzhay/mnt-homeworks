@@ -338,70 +338,29 @@ py37-ansible210 installdeps: -rtox-requirements.txt, ansible<3.0
 ```
 [tox]
 minversion = 1.8
-basepython = python3.6
-envlist = py36-molecule-light
+basepython = python3.8
+envlist = py{38}-ansible-{2.10,2.12}
 skipsdist = true
 
 [testenv]
 passenv = *
 deps =
     -r tox-requirements.txt
-    ansible210: ansible<3.0
-    ansible30: ansible<3.1
+    2.10: ansible == 2.10.*
+    2.13: ansible == 2.13.*
 commands =
-    molecule test -s light --destroy always
+{posargs:molecule test -s light --destroy always}
 ```
 
 ```
-(venv) admin-oleg@admin-oleg-VMware-Virtual-Platform:~/Desktop/Netology/mnt-homeworks/08-ansible-04-role/homework4/playbook/roles/vector$ docker run --privileged=True -v /home/admin-oleg/Desktop/Netology/mnt-homeworks/08-ansible-04-role/homework4/playbook/roles/vector:/opt/vector-role -w /opt/vector-role -it aragast/netology:latest /bin/bash
-[root@65aa52e6de90 vector-role]# tox
-py36-molecule-light recreate: /opt/vector-role/.tox/py36-molecule-light
-py36-molecule-light installdeps: -rtox-requirements.txt
-py36-molecule-light installed: ansible-compat==1.0.0,arrow==1.2.3,bcrypt==4.0.1,binaryornot==0.4.4,cached-property==1.5.2,Cerberus==1.3.5,certifi==2025.4.26,cffi==1.15.1,chardet==5.0.0,charset-normalizer==2.0.12,click==8.0.4,click-help-colors==0.9.4,commonmark==0.9.1,cookiecutter==1.7.3,cryptography==40.0.2,dataclasses==0.8,distro==1.9.0,enrich==1.2.7,idna==3.10,importlib-metadata==4.8.3,Jinja2==3.0.3,jinja2-time==0.2.0,jmespath==0.10.0,lxml==5.4.0,MarkupSafe==2.0.1,molecule==3.6.1,molecule-podman==1.1.0,packaging==21.3,paramiko==2.12.0,pluggy==1.0.0,poyo==0.5.0,pycparser==2.21,Pygments==2.14.0,PyNaCl==1.5.0,pyparsing==3.1.4,python-dateutil==2.9.0.post0,python-slugify==6.1.2,PyYAML==6.0.1,requests==2.27.1,rich==12.6.0,selinux==0.2.1,six==1.17.0,subprocess-tee==0.3.5,text-unidecode==1.3,typing_extensions==4.1.1,urllib3==1.26.20,zipp==3.6.0
-py36-molecule-light run-test-pre: PYTHONHASHSEED='3497928613'
-py36-molecule-light run-test: commands[0] | molecule test -s light --destroy always
-Traceback (most recent call last):
-  File "/opt/vector-role/.tox/py36-molecule-light/bin/molecule", line 5, in <module>
-    from molecule.__main__ import main
-  File "/opt/vector-role/.tox/py36-molecule-light/lib/python3.6/site-packages/molecule/__main__.py", line 24, in <module>
-    from molecule.shell import main
-  File "/opt/vector-role/.tox/py36-molecule-light/lib/python3.6/site-packages/molecule/shell.py", line 29, in <module>
-    from molecule import command, logger
-  File "/opt/vector-role/.tox/py36-molecule-light/lib/python3.6/site-packages/molecule/command/__init__.py", line 27, in <module>
-    from molecule.command import base  # noqa
-  File "/opt/vector-role/.tox/py36-molecule-light/lib/python3.6/site-packages/molecule/command/base.py", line 33, in <module>
-    import molecule.scenarios
-  File "/opt/vector-role/.tox/py36-molecule-light/lib/python3.6/site-packages/molecule/scenarios.py", line 24, in <module>
-    from molecule import util
-  File "/opt/vector-role/.tox/py36-molecule-light/lib/python3.6/site-packages/molecule/util.py", line 40, in <module>
-    from molecule.app import app
-  File "/opt/vector-role/.tox/py36-molecule-light/lib/python3.6/site-packages/molecule/app.py", line 13, in <module>
-    app = App()
-  File "/opt/vector-role/.tox/py36-molecule-light/lib/python3.6/site-packages/molecule/app.py", line 10, in __init__
-    self.runtime = Runtime(isolated=True)
-  File "/opt/vector-role/.tox/py36-molecule-light/lib/python3.6/site-packages/ansible_compat/runtime.py", line 84, in __init__
-    self.config = AnsibleConfig()
-  File "/opt/vector-role/.tox/py36-molecule-light/lib/python3.6/site-packages/ansible_compat/config.py", line 432, in __init__
-    ["ansible-config", "dump"], universal_newlines=True, env=env
-  File "/usr/lib64/python3.6/subprocess.py", line 356, in check_output
-    **kwargs).stdout
-  File "/usr/lib64/python3.6/subprocess.py", line 423, in run
-    with Popen(*popenargs, **kwargs) as process:
-  File "/usr/lib64/python3.6/subprocess.py", line 729, in __init__
-    restore_signals, start_new_session)
-  File "/usr/lib64/python3.6/subprocess.py", line 1364, in _execute_child
-    raise child_exception_type(errno_num, err_msg, err_filename)
-FileNotFoundError: [Errno 2] No such file or directory: 'ansible-config': 'ansible-config'
-ERROR: InvocationError for command /opt/vector-role/.tox/py36-molecule-light/bin/molecule test -s light --destroy always (exited with code 1)
-_____________________________________________________________________________________ summary ______________________________________________________________________________________
-ERROR:   py36-molecule-light: commands failed
-[root@65aa52e6de90 vector-role]# which ansible
-/usr/bin/which: no ansible in (/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin)
-[root@65aa52e6de90 vector-role]# which ansible-config
-/usr/bin/which: no ansible-config in (/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin)
-[root@65aa52e6de90 vector-role]# ansible --version
-bash: ansible: command not found
-[root@65aa52e6de90 vector-role]# ansible
-bash: ansible: command not found
-[root@65aa52e6de90 vector-role]# 
+admin-oleg@admin-oleg-VMware-Virtual-Platform:~/Desktop/Netology/mnt-homeworks/08-ansible-04-role/homework4/playbook/roles/vector$ docker run --privileged=True -v /home/admin-oleg/Desktop/Netology/mnt-homeworks/08-ansible-04-role/homework4/playbook/roles/vector:/opt/vector-role -w /opt/vector-role -it aragast/netology:latest /bin/bash
+[root@575e4ad9cd4f vector-role]# tox
+py38-ansible-2.10 installed: ansible==2.10.7,ansible-base==2.10.17,ansible-compat==3.0.2,ansible-core==2.13.13,arrow==1.4.0,attrs==25.3.0,backports.zoneinfo==0.2.1,binaryornot==0.4.4,certifi==2026.2.25,cffi==1.17.1,chardet==5.2.0,charset-normalizer==3.4.5,click==8.1.8,click-help-colors==0.9.4,cookiecutter==2.6.0,cryptography==46.0.5,distro==1.9.0,enrich==1.2.7,idna==3.11,importlib_resources==6.4.5,Jinja2==3.1.6,jmespath==1.0.1,jsonschema==4.23.0,jsonschema-specifications==2023.12.1,lxml==6.0.2,markdown-it-py==3.0.0,MarkupSafe==2.1.5,mdurl==0.1.2,molecule==4.0.4,molecule-podman==2.0.3,packaging==26.0,pkgutil_resolve_name==1.3.10,pluggy==1.5.0,pycparser==2.23,Pygments==2.19.2,python-dateutil==2.9.0.post0,python-slugify==8.0.4,PyYAML==6.0.3,referencing==0.35.1,requests==2.32.4,resolvelib==0.8.1,rich==14.3.3,rpds-py==0.20.1,selinux==0.2.1,six==1.17.0,subprocess-tee==0.4.2,text-unidecode==1.3,typing_extensions==4.13.2,urllib3==2.2.3,zipp==3.20.2
+py38-ansible-2.10 run-test-pre: PYTHONHASHSEED='3393353090'
+py38-ansible-2.12 installed: ansible-compat==3.0.2,ansible-core==2.13.13,arrow==1.4.0,attrs==25.3.0,backports.zoneinfo==0.2.1,binaryornot==0.4.4,certifi==2026.2.25,cffi==1.17.1,chardet==5.2.0,charset-normalizer==3.4.5,click==8.1.8,click-help-colors==0.9.4,cookiecutter==2.6.0,cryptography==46.0.5,distro==1.9.0,enrich==1.2.7,idna==3.11,importlib_resources==6.4.5,Jinja2==3.1.6,jmespath==1.0.1,jsonschema==4.23.0,jsonschema-specifications==2023.12.1,lxml==6.0.2,markdown-it-py==3.0.0,MarkupSafe==2.1.5,mdurl==0.1.2,molecule==4.0.4,molecule-podman==2.0.3,packaging==26.0,pkgutil_resolve_name==1.3.10,pluggy==1.5.0,pycparser==2.23,Pygments==2.19.2,python-dateutil==2.9.0.post0,python-slugify==8.0.4,PyYAML==6.0.3,referencing==0.35.1,requests==2.32.4,resolvelib==0.8.1,rich==14.3.3,rpds-py==0.20.1,selinux==0.2.1,six==1.17.0,subprocess-tee==0.4.2,text-unidecode==1.3,typing_extensions==4.13.2,urllib3==2.2.3,zipp==3.20.2
+py38-ansible-2.12 run-test-pre: PYTHONHASHSEED='3393353090'
+______________________________________________________________________________________________ summary _______________________________________________________________________________________________
+  py38-ansible-2.10: commands succeeded
+  py38-ansible-2.12: commands succeeded
+  congratulations :)
 ```

@@ -1,0 +1,25 @@
+---
+- name: Prepare instance (install Python on CentOS 7)
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Install Python 3 and pip
+      raw: |
+        if ! command -v python3 &> /dev/null; then
+          yum update -y && yum install -y python3 python3-pip || true
+        fi
+      changed_when: false
+
+    - name: Verify Python installation
+      command: python3 --version
+      register: python_check
+      ignore_errors: true
+
+    - name: Debug Python version
+      debug:
+        var: python_check.stdout
+      when: python_check is succeeded
+
+    - name: Wait for Python to be available
+      wait_for_connection:
+        timeout: 60

@@ -4,10 +4,21 @@ dependency:
 driver:
   name: podman
 platforms:
-  - name: molecule-debian11
-    image: debian:11
+  - name: debian
+    image: debian:12
     pre_build_image: true
 provisioner:
   name: ansible
+  inventory:
+    group_vars:
+      all:
+        ansible_python_interpreter: /usr/local/bin/python3.8
 verifier:
   name: ansible
+scenario:
+  test_sequence:
+    - destroy
+    - create
+    - converge
+    - destroy
+
