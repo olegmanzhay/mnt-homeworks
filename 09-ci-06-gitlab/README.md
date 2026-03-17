@@ -63,3 +63,24 @@
 ### Важно 
 После выполнения задания выключите и удалите все задействованные ресурсы в Yandex Cloud.
 
+
+
+## Установка GitLab
+
+docker run --detach \
+--hostname gitlab.example.com \
+--publish 443:443 --publish 80:80 --publish 22:22 \
+--name gitlab \
+--restart always \
+--network gitlab-network \
+--volume /srv/gitlab/config:/etc/gitlab \
+--volume /srv/gitlab/logs:/var/log/gitlab \
+--volume /srv/gitlab/data:/var/opt/gitlab \
+gitlab/gitlab-ce:latest
+
+docker exec -it gitlab bash
+cat /etc/gitlab/initial_root_password
+
+root
+LfzRMKyrlKkIcrrYbsSqkidlLt57RVKOLg1kTfXHwZA=
+
