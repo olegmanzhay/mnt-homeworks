@@ -66,21 +66,33 @@
 
 
 ## Установка GitLab
+external_url 'http://192.168.1.100'
 
-docker run --detach \
---hostname gitlab.example.com \
---publish 443:443 --publish 80:80 --publish 22:22 \
---name gitlab \
---restart always \
---network gitlab-network \
---volume /srv/gitlab/config:/etc/gitlab \
---volume /srv/gitlab/logs:/var/log/gitlab \
---volume /srv/gitlab/data:/var/opt/gitlab \
-gitlab/gitlab-ce:latest
+sudo systemctl status gitlab-runsvdir
+sudo systemctl status gitlab-runsvdir
+sudo gitlab-ctl status
+sudo gitlab-ctl restart
+sudo systemctl status gitlab-runner
+sudo cat /etc/gitlab/initial_root_password
+rpYIPjT4opBlx47MSYnCQ9HJY1tGnB+JM3HoYfEOCBY=
 
-docker exec -it gitlab bash
-cat /etc/gitlab/initial_root_password
+Нужно смонтировать в volumes = ["/cache", "/var/run/docker.sock:/var/run/docker.sock"] в /etc/gitlab-runner/config.toml
 
-root
-LfzRMKyrlKkIcrrYbsSqkidlLt57RVKOLg1kTfXHwZA=
+Для активации регистри, куда складывать докер образы
+sudo nano /etc/gitlab/gitlab.rb
+# Включите Container Registry
+gitlab_rails['registry_enabled'] = true
 
+# Укажите URL реестра (используйте IP вашего сервера и порт 5050)
+registry_external_url 'http://192.168.237.129:5050'
+
+# Настройте хранилище (опционально, но рекомендуется)
+registry['storage_path'] = "/var/opt/gitlab/registry"
+registry['storage_driver'] = "filesystem"
+
+# Включите NGINX для реестра
+registry_nginx['enable'] = true
+registry_nginx['listen_port'] = 5050
+
+# Добавляем insecure registry для Docker daemon внутри контейнера
+insecure_registry = "192.168.237.129:5050"
